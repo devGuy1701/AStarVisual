@@ -4,3 +4,9 @@ project(AStarVisual)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(AStarVisual main.cpp)
+
+
+find_package(SFML 2 COMPONENTS network audio graphics window system REQUIRED)
+if(SFML_FOUND)
+    target_link_libraries(AStarVisual sfml-graphics sfml-window sfml-system)
+endif()
