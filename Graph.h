@@ -13,8 +13,9 @@
 #include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/Image.hpp>
 
-
 #include "Cell.h"
+#include <memory>
+#include <cmath>
 
 class Graph {
 public:
@@ -25,6 +26,13 @@ public:
         delete endCell;
         delete  current;
     }
+
+
+    void setStart(int x, int y);
+    void setEnd(int x, int y);
+    void setBlock(int x, int y);
+
+    void printMap();
 
 private:
     //Mappa formata da celle logiche
