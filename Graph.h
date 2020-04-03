@@ -45,6 +45,10 @@ private:
     //Finestra per visualizzazione e mappa grafica
     sf::RenderWindow window;
     std::vector<sf::RectangleShape> pattern;
+    sf::Color valid;
+
+    void setPattern(int cellSize, std::vector<sf::RectangleShape> &pattern) const;
+    void setBUCell(int cellSize, const Cell *oldCell, const sf::Event &event);
 
 };
 
