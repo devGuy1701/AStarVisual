@@ -10,7 +10,7 @@ Cell::Cell(int _x, int _y, int _v, Cell *p, bool vis) {
     else x = 0;
     if(_y >= 0) y = _y;
     else y = 0;
-    value = _v;//controllo valori?
+    value = _v;
     parent = p;
     visited = vis;
     globalGoal = INFINITY;

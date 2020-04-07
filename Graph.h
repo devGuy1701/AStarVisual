@@ -21,10 +21,10 @@ class Graph {
 public:
     Graph(int width, int height);
     ~Graph() {
-        delete map;
+        delete[] map;
         delete startCell;
         delete endCell;
-        delete  current;
+        delete current;
     }
 
 
@@ -47,9 +47,16 @@ private:
     std::vector<sf::RectangleShape> pattern;
     sf::Color valid;
 
+
+    void setCellColor(sf::Color color, int px, int py, int cellSize);
     void setPattern(int cellSize, std::vector<sf::RectangleShape> &pattern) const;
     void setBUCell(int cellSize, const Cell *oldCell, const sf::Event &event);
+    float distance(Cell* a, Cell* b);
 
+    void setMapNeighbours();
+    Cell *setDestinationCell(int cellSize, Cell *oldCell, const sf::Event &event);
+    void startPathFinding();
+    void drawPath(int cellSize, sf::RenderWindow &window);
 };
 
 

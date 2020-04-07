@@ -23,7 +23,7 @@ public:
     void setX(int _x) { x = _x >= 0 ? _x : 0; }
     void setY(int _y) { y = _y >= 0 ? _y : 0; }
     void setVisited(bool vis) { visited = vis; }
-    void setValue(int val) { value = val; } //controllo valori?
+    void setValue(int val) { value = val; }
     void setGlobalGoal(float global) { globalGoal = global; }
     void setLocalGoal(float local) { localGoal = local; }
     void setParent(Cell* p) { parent = p; }
