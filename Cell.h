@@ -18,7 +18,6 @@ public:
     float getGlobalGoal() const { return globalGoal; }
     float getLocalGoal() const { return localGoal; }
     Cell *getParent() const { return  parent; }
-    std::vector<Cell*> getNeighbours() const { return vecNeighbours; }
 
     void setX(int _x) { x = _x >= 0 ? _x : 0; }
     void setY(int _y) { y = _y >= 0 ? _y : 0; }
@@ -27,14 +26,12 @@ public:
     void setGlobalGoal(float global) { globalGoal = global; }
     void setLocalGoal(float local) { localGoal = local; }
     void setParent(Cell* p) { parent = p; }
-    void addNeighbour(Cell* n) { vecNeighbours.push_back(n); }
 
 
 private:
     int x, y, value;
     bool visited;
     float globalGoal, localGoal;
-    std::vector<Cell*> vecNeighbours;
     Cell* parent;
 };
 

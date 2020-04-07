@@ -27,18 +27,6 @@ Graph::Graph(int w, int h) : width(w), height(h), window(sf::VideoMode(600, 600)
         }
     }
     //current = startCell;
-    setMapNeighbours();
-}
-
-void Graph::setMapNeighbours() {
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            if( y > 0 ) map[y * width + x].addNeighbour(&map[(y - 1) * width + (x + 0)]);
-            if( y < height - 1) map[y * width + x].addNeighbour(&map[(y + 1) * width + (x + 0)]);
-            if( x > 0) map[y * width + x].addNeighbour(&map[(y + 0) * width + (x - 1)]);
-            if(x < width - 1) map[y * width + x].addNeighbour(&map[(y + 0) * width + (x + 1)]);
-        }
-    }
 }
 
 void Graph::setStart(int x, int y) {
@@ -181,18 +169,7 @@ Cell *Graph::setDestinationCell(int cellSize, Cell *oldCell, const sf::Event &ev
                 break;
 
             if(endCell != nullptr && oldCell != nullptr) { // se ho fatto almeno una volta l'algoritmo
-                /*for(auto &g : pattern) { //trovo la vecchia end e la metto valida(colore)
-                    int gx = g.getPosition().x;
-                    int gy = g.getPosition().y;
-
-                    int sx = oldCell->getX();
-                    int sy = oldCell->getY();
-
-                    if(gx == sx*cellSize && gy == sy*cellSize) {
-                        g.setFillColor(valid);
-                        break;
-                    }
-                }*/
+                //trovo la vecchia end e la metto valida(colore)
                 setCellColor(valid, oldCell->getX(), oldCell->getY(), cellSize);
             }
 
@@ -206,18 +183,7 @@ Cell *Graph::setDestinationCell(int cellSize, Cell *oldCell, const sf::Event &ev
             int ex = endCell->getX();
             int ey = endCell->getY();
 
-            /*for(auto &g : pattern) { //metto verde la cella start
-                int gx = g.getPosition().x;
-                int gy = g.getPosition().y;
-
-                int sx = startCell->getX();
-                int sy = startCell->getY();
-
-                if(gx == sx*cellSize && gy == sy*cellSize) {
-                    g.setFillColor(sf::Color::Green);
-                    break;
-                }
-            }*/
+            //metto verde la cella start
             setCellColor(sf::Color::Green, startCell->getX(), startCell->getY(), cellSize);
 
             it.setFillColor(sf::Color::Red);
@@ -276,8 +242,12 @@ void Graph::startPathFinding() {
         current = listNotTestedCells.front();
         current->setVisited(true);
 
-        for(auto cellNeighbour : current->getNeighbours()) {
+        int x = current->getX();
+        int y = current->getY();
+        Cell *cellNeighbour = nullptr;
 
+        if( y > 0) {
+            cellNeighbour = &map[(y - 1) * width + (x + 0)];
             if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
                 listNotTestedCells.push_back(cellNeighbour);
 
@@ -288,7 +258,45 @@ void Graph::startPathFinding() {
                 cellNeighbour->setLocalGoal(possiblyLowerGoal);
                 cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
             }
+        }
+        if( y < height - 1) {
+            cellNeighbour = &map[(y + 1) * width + (x + 0)];
+            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
+                listNotTestedCells.push_back(cellNeighbour);
 
+            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
+
+            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
+                cellNeighbour->setParent(current);
+                cellNeighbour->setLocalGoal(possiblyLowerGoal);
+                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
+            }
+        }
+        if( x > 0) {
+            cellNeighbour = &map[(y + 0) * width + (x - 1)];
+            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
+                listNotTestedCells.push_back(cellNeighbour);
+
+            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
+
+            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
+                cellNeighbour->setParent(current);
+                cellNeighbour->setLocalGoal(possiblyLowerGoal);
+                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
+            }
+        }
+        if( y < width - 1) {
+            cellNeighbour = &map[(y + 0) * width + (x + 1)];
+            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
+                listNotTestedCells.push_back(cellNeighbour);
+
+            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
+
+            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
+                cellNeighbour->setParent(current);
+                cellNeighbour->setLocalGoal(possiblyLowerGoal);
+                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
+            }
         }
 
     }

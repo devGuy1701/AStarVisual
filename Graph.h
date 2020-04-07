@@ -53,7 +53,6 @@ private:
     void setBUCell(int cellSize, const Cell *oldCell, const sf::Event &event);
     float distance(Cell* a, Cell* b);
 
-    void setMapNeighbours();
     Cell *setDestinationCell(int cellSize, Cell *oldCell, const sf::Event &event);
     void startPathFinding();
     void drawPath(int cellSize, sf::RenderWindow &window);
