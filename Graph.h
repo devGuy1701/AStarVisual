@@ -32,6 +32,9 @@ public:
     void setEnd(int x, int y);
     void setBlock(int x, int y);
 
+    int getWidth() { return width; }
+    int getHeight() { return height; }
+
     void printMap();
 
 private:
