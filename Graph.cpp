@@ -5,7 +5,7 @@
 #include <list>
 #include <cmath>
 #include <algorithm>
-#include <time.h>
+#include <ctime>
 #include <vector>
 
 #include "Graph.h"
@@ -15,8 +15,6 @@ Graph::Graph(int w, int h) : width(w), height(h), window(sf::VideoMode(600, 600)
     srand( time(NULL) );
 
     map = new Cell[width * height];
-    startCell = nullptr;
-    endCell = nullptr;
 
     valid = sf::Color(128, 212, 255);
 
@@ -31,17 +29,20 @@ Graph::Graph(int w, int h) : width(w), height(h), window(sf::VideoMode(600, 600)
 
 void Graph::setStart(int x, int y) {
     map[y*width + x].setValue(1);
-    startCell = &map[y*width + x];
-    current = startCell;
+    startCell = map[y*width + x];
 }
 
 void Graph::setEnd(int x, int y) {
     map[y*width + x].setValue(3);
-    endCell = &map[y*width + x];
+    endCell = map[y*width + x];
 }
 
 void Graph::setBlock(int x, int y) {
     map[y*width + x].setValue(9);
+}
+
+int Graph::getIndex(const Cell &c) const {
+    return (c.getY()*width + c.getX());
 }
 
 void Graph::printMap() {
@@ -168,27 +169,31 @@ Cell *Graph::setDestinationCell(int cellSize, Cell *oldCell, const sf::Event &ev
             if(it.getFillColor() == sf::Color::Black || it.getFillColor() == sf::Color::Red) // non posso andare su un blocco o dove già sono
                 break;
 
-            if(endCell != nullptr && oldCell != nullptr) { // se ho fatto almeno una volta l'algoritmo
+            if(map[getIndex(endCell)].isVisited() && oldCell != nullptr) { // se ho fatto almeno una volta l'algoritmo
                 //trovo la vecchia end e la metto valida(colore)
-                setCellColor(valid, oldCell->getX(), oldCell->getY(), cellSize);
+                for(auto &g : pattern) {
+                    if(g.getFillColor() == sf::Color::Green) {
+                        g.setFillColor(valid);
+                        break;
+                    }
+                }
+                //setCellColor(valid, oldCell->getX(), oldCell->getY(), cellSize);
             }
 
             setEnd(rx / cellSize, ry / cellSize);
 
             //controllo che la destinazione sia raggiungibile
             startPathFinding();
-            if(endCell->getParent() == nullptr)
+            if(!map[getIndex(endCell)].isVisited())
                 break;
 
-            int ex = endCell->getX();
-            int ey = endCell->getY();
-
             //metto verde la cella start
-            setCellColor(sf::Color::Green, startCell->getX(), startCell->getY(), cellSize);
+            setCellColor(sf::Color::Green, startCell.getX(), startCell.getY(), cellSize);
 
             it.setFillColor(sf::Color::Red);
 
-            oldCell = startCell;
+            oldCell = &startCell;
+            endCell.setVisited(false);
             startCell = endCell;
 
             break;
@@ -209,114 +214,135 @@ void Graph::setCellColor(sf::Color color, int px, int py, int cellSize) {
     }
 }
 
-float Graph::distance(Cell *a, Cell *b) {
-    return sqrtf((a->getX() - b->getX()) * (a->getX() - b->getX()) +  (a->getY() - b->getY()) * (a->getY() - b->getY()));
+float Graph::distance(const Cell& a, const Cell& b) const {
+    return sqrtf((a.getX() - b.getX()) * (a.getX() - b.getX()) +  (a.getY() - b.getY()) * (a.getY() - b.getY()));
 }
 
 void Graph::startPathFinding() {
+    parents.clear();
+    localGoals.clear();
+    globalGoals.clear();
+
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             map[y * width + x].setVisited(false);
-            map[y * width + x].setGlobalGoal(INFINITY);
-            map[y * width + x].setLocalGoal(INFINITY);
-            map[y * width + x].setParent(nullptr);
+            localGoals.insert(std::pair<int,int>(y*width+x, 5000));
+            globalGoals.insert(std::pair<int,int>(y*width+x, 5000));
+            parents.insert(std::pair<int,int>(y*width+x, -1));//per ora non lo ha
         }
     }
 
-    current = startCell;
-    startCell->setLocalGoal(0);
-    startCell->setGlobalGoal(distance(startCell, endCell));
+    Cell current = startCell;
+    localGoals.at(getIndex(current)) = 0;
+    globalGoals.at(getIndex(current)) = distance(current, endCell);
 
-    std::list<Cell*> listNotTestedCells;
+    std::list<Cell> listNotTestedCells;
     listNotTestedCells.push_back(startCell);
 
-    while(!listNotTestedCells.empty() && current != endCell) {
-        listNotTestedCells.sort( [](const Cell* lhs, const Cell* rhs) { return lhs->getGlobalGoal() < rhs->getGlobalGoal(); } );
+    while(!listNotTestedCells.empty()) {
 
-        while(!listNotTestedCells.empty() && listNotTestedCells.front()->isVisited())
+        if(current == endCell) {
+            endCell.setVisited(true);
+            map[getIndex(endCell)].setVisited(true);
+            break;
+        }
+
+        listNotTestedCells.sort( [&](const Cell& lhs, const Cell& rhs) {
+            return globalGoals.at(getIndex(lhs)) < globalGoals.at(getIndex(rhs));
+        } );
+
+        while(!listNotTestedCells.empty() && listNotTestedCells.front().isVisited())
             listNotTestedCells.pop_front();
 
         if(listNotTestedCells.empty())
             break;
 
         current = listNotTestedCells.front();
-        current->setVisited(true);
+        listNotTestedCells.front().setVisited(true);
+        current.setVisited(true);
+        map[getIndex(current)].setVisited(true);
 
-        int x = current->getX();
-        int y = current->getY();
-        Cell *cellNeighbour = nullptr;
+        int x = current.getX();
+        int y = current.getY();
 
         if( y > 0) {
-            cellNeighbour = &map[(y - 1) * width + (x + 0)];
-            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
-                listNotTestedCells.push_back(cellNeighbour);
-
-            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
-
-            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
-                cellNeighbour->setParent(current);
-                cellNeighbour->setLocalGoal(possiblyLowerGoal);
-                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
-            }
+            addNeighbour(map[(y - 1) * width + (x + 0)], current, listNotTestedCells);
         }
         if( y < height - 1) {
-            cellNeighbour = &map[(y + 1) * width + (x + 0)];
-            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
-                listNotTestedCells.push_back(cellNeighbour);
-
-            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
-
-            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
-                cellNeighbour->setParent(current);
-                cellNeighbour->setLocalGoal(possiblyLowerGoal);
-                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
-            }
+            addNeighbour(map[(y + 1) * width + (x + 0)], current, listNotTestedCells);
         }
         if( x > 0) {
-            cellNeighbour = &map[(y + 0) * width + (x - 1)];
-            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
-                listNotTestedCells.push_back(cellNeighbour);
-
-            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
-
-            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
-                cellNeighbour->setParent(current);
-                cellNeighbour->setLocalGoal(possiblyLowerGoal);
-                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
-            }
+            addNeighbour(map[(y + 0) * width + (x - 1)], current, listNotTestedCells);
         }
-        if( y < width - 1) {
-            cellNeighbour = &map[(y + 0) * width + (x + 1)];
-            if(!cellNeighbour->isVisited() && cellNeighbour->getValue() != 9)
-                listNotTestedCells.push_back(cellNeighbour);
-
-            float possiblyLowerGoal = current->getLocalGoal() + distance(current, cellNeighbour);
-
-            if(possiblyLowerGoal < cellNeighbour->getLocalGoal()) {
-                cellNeighbour->setParent(current);
-                cellNeighbour->setLocalGoal(possiblyLowerGoal);
-                cellNeighbour->setGlobalGoal(cellNeighbour->getLocalGoal() + distance(cellNeighbour, endCell));
-            }
+        if( x < width - 1) {
+            addNeighbour(map[(y + 0) * width + (x + 1)], current, listNotTestedCells);
         }
 
     }
 
 }
 
-void Graph::drawPath(int cellSize, sf::RenderWindow &window) {
-    if(endCell != nullptr) {
-        Cell *p = endCell;
-        while(p->getParent() != nullptr) {
-            sf::Vertex line[2];
+void Graph::addNeighbour(const Cell &neighbour, const Cell &current, std::list<Cell> &listNotTestedCells) {
+    if(!neighbour.isVisited() && neighbour.getValue() != 9)
+        listNotTestedCells.push_back(neighbour);
+    float possiblyLowerGoal = localGoals.at(getIndex(current)) + distance(current, neighbour);
+    if(possiblyLowerGoal < localGoals.at(getIndex(neighbour))) {
+        parents.at(getIndex(neighbour)) = getIndex(current);
+        localGoals.at(getIndex(neighbour)) = possiblyLowerGoal;
+        globalGoals.at(getIndex(neighbour)) = localGoals.at(getIndex(neighbour)) + distance(neighbour, endCell);
+    }
+}
 
-            line[0].position = sf::Vector2f(p->getX()*cellSize + cellSize / 2, p->getY()*cellSize + cellSize / 2);
+void Graph::drawPath(int cellSize, sf::RenderWindow &window) const {
+
+    std::map<int, int> temp;
+    std::vector<int> path;
+
+    for(auto p : parents)
+        if(p.second != -1)
+            temp.insert(std::pair<int, int>(p.first, p.second));
+
+    int ex = endCell.getX();
+    int ey = endCell.getY();
+
+    for(auto p : temp) {
+        int tx = p.first % 10;
+        int ty = p.first / 10;
+
+        if(ex == tx && ey == ty) {
+            path.insert(path.begin(), p.second);
+            path.insert(path.begin(), p.first);
+            int h = p.second;
+            while(true) {
+                if(temp.find(h) != temp.end()) {
+                    path.push_back(temp.at(h));
+                    h = temp.at(h);
+                } else break;
+            }
+            break;
+        }
+    }
+
+    int k = 0;
+
+    for(auto it = path.begin(); it != path.end(); ++it) {
+        int ix = (*it) % 10;
+        int iy = (*it) / 10;
+        if(k < path.size() - 1) {
+            int iix = (*(it+1)) % 10;
+            int iiy = (*(it+1)) / 10;
+
+            sf::Vertex line[2];
+            line[0].position = sf::Vector2f(ix*cellSize + cellSize / 2, iy*cellSize + cellSize / 2);
             line[0].color = sf::Color::Black;
 
-            line[1].position = sf::Vector2f(p->getParent()->getX()*cellSize + cellSize / 2, p->getParent()->getY()*cellSize + cellSize / 2);
+            line[1].position = sf::Vector2f(iix*cellSize + cellSize / 2, iiy*cellSize + cellSize / 2);
             line[1].color = sf::Color::Black;
 
             window.draw(line, 2, sf::Lines);
-            p = p->getParent();
-        }
+        } else break;
+        k++;
     }
+
+
 }

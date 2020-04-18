@@ -8,7 +8,7 @@
 
 class GraphFixture : public ::testing::Test {
 public:
-    ~GraphFixture() {}
+    ~GraphFixture() override {}
 
 protected:
     void TearDown() override {
