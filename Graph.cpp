@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <ctime>
 #include <vector>
+#include <iostream>
 
 #include "Graph.h"
 
@@ -345,4 +346,45 @@ void Graph::drawPath(int cellSize, sf::RenderWindow &window) const {
     }
 
 
+}
+void Graph::setNoBlock() {
+    for (int i = 0; i < width; ++i) {
+        for (int j = 0; j < height; ++j) {
+            if(map[j * width + i].getValue() == 9)
+                map[j * width + i].setValue(2);
+        }
+    }
+}
+
+Cell Graph::getCellFromIndex(int x, int y) const {
+    return map[y*width + x];
+}
+
+int Graph::getPathSize() const {
+    std::map<int, int> temp;
+    std::vector<int> path;
+
+    for(auto p : parents)
+        if(p.second != -1)
+            temp.insert(std::pair<int, int>(p.first, p.second));
+
+    int ex = endCell.getX();
+    int ey = endCell.getY();
+
+    for(auto p : temp) {
+
+        if(ex*width+ey == p.first) {
+            path.insert(path.begin(), p.second);
+            path.insert(path.begin(), p.first);
+            int h = p.second;
+            while(true) {
+                if(temp.find(h) != temp.end()) {
+                    path.push_back(temp.at(h));
+                    h = temp.at(h);
+                } else break;
+            }
+            break;
+        }
+    }
+    return path.size();
 }

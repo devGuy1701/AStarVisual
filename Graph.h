@@ -38,6 +38,11 @@ public:
 
     void startPathFinding();
 
+
+    void setNoBlock();
+    Cell getCellFromIndex(int x, int y) const;
+    int getPathSize() const;
+
 private:
     //Mappa formata da celle logiche
     Cell* map;

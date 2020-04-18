@@ -16,8 +16,21 @@ protected:
     }
     void SetUp() override {
         g = new Graph(4,4);
+        //percorso con risoluzione certa
+        g->setNoBlock();
         g->setStart(0,0);
-        g->printMap();
+        g->setEnd(3, 3);
+        g->startPathFinding();
+        EXPECT_EQ(g->getCellFromIndex(3,3).isVisited(), true);
+        EXPECT_EQ(g->getPathSize(), 7);//numero di celle percorse
+        //percorso senza risoluzione
+        g->setStart(0,0);
+        g->setEnd(3,3);
+        g->setBlock(0,1);
+        g->setBlock(1,0);
+        g->startPathFinding();
+        EXPECT_EQ(g->getCellFromIndex(3,3).isVisited(), false);
+        EXPECT_EQ(g->getPathSize(),0);//numero di celle percorse
     }
     Graph *g;
 };

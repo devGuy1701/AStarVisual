@@ -12,18 +12,16 @@ TEST(Cell, DefaultConstructor) {
     ASSERT_EQ(c.getX(), 0);
     ASSERT_EQ(c.getY(), 0);
     ASSERT_EQ(c.getValue(), 0);
-    ASSERT_EQ(c.getParent(), nullptr);
     ASSERT_EQ(c.isVisited(), false);
 
 }
 
 TEST(Cell, Constructor) {
-    Cell c(5, -2, 1, nullptr, true);
+    Cell c(5, -2, 1, true);
 
     ASSERT_EQ(c.getX(), 5);
     ASSERT_EQ(c.getY(), 0);
     ASSERT_EQ(c.getValue(), 1);
-    ASSERT_EQ(c.getParent(), nullptr);
     ASSERT_EQ(c.isVisited(), true);
 
 }

@@ -11,7 +11,6 @@ int main() {
     Graph g (width, height);
 
     g.setStart(0,0);
-
     g.printMap();
 
     return 0;
